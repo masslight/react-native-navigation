@@ -5,9 +5,11 @@ import android.support.annotation.NonNull;
 import com.reactnativenavigation.utils.StringUtils;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 public class IdStack<E> implements Iterable<String> {
 
@@ -80,4 +82,15 @@ public class IdStack<E> implements Iterable<String> {
 	public Collection<E> values() {
 		return map.values();
 	}
+
+  // Get child controllers preserving the order. Collection has underfined order of elements.
+  public List<E> array() {
+    List<E> list = new ArrayList();
+    //Iterator<String> iterator = iterator();
+    Iterator<String> iterator = deque.descendingIterator();
+    while (iterator.hasNext()) {
+      list.add(map.get(iterator.next()));
+    }
+    return list;
+  }
 }

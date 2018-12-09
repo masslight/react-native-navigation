@@ -22,6 +22,8 @@ import com.reactnativenavigation.viewcontrollers.stack.StackController;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Stack;
 
 public class Navigator extends ParentController {
 
@@ -149,7 +151,13 @@ public class Navigator extends ParentController {
     }
 
     public void setStackRoot(String id, ViewController viewController, CommandListener listener) {
-        applyOnStack(id, listener, stack -> stack.setRoot(viewController, listener));
+        if (viewController instanceof StackController) {
+            List<ViewController> viewControllers = ((StackController) viewController).getChildControllersList();
+            applyOnStack(id, listener, stack -> stack.setRoot(viewControllers, listener));
+        }
+        else {
+            applyOnStack(id, listener, stack -> stack.setRoot(viewController, listener));
+        }
     }
 
     public void pop(String id, Options mergeOptions, CommandListener listener) {
