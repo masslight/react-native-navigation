@@ -32,6 +32,7 @@ public class Button {
     @Nullable public Typeface fontFamily;
     public Text icon = new NullText();
     public Text testId = new NullText();
+    public Text accessibilityLabel = new NullText();
     public Component component = new Component();
 
     private static Button parseJson(JSONObject json, TypefaceLoader typefaceManager) {
@@ -47,6 +48,7 @@ public class Button {
         button.fontFamily = typefaceManager.getTypeFace(json.optString("fontFamily", ""));
         button.fontWeight = TextParser.parse(json, "fontWeight");
         button.testId = TextParser.parse(json, "testID");
+        button.accessibilityLabel = TextParser.parse(json, "accessibilityLabel");
         button.component = Component.parse(json.optJSONObject("component"));
 
         if (json.has("icon")) {
@@ -124,6 +126,7 @@ public class Button {
         if (other.fontFamily != null) fontFamily = other.fontFamily;
         if (other.fontWeight.hasValue()) fontWeight = other.fontWeight;
         if (other.testId.hasValue()) testId = other.testId;
+        if (other.accessibilityLabel.hasValue()) accessibilityLabel = other.accessibilityLabel;
         if (other.component.hasValue()) component = other.component;
         if (other.showAsAction.hasValue()) showAsAction = other.showAsAction;
         if (other.icon.hasValue()) icon = other.icon;
@@ -141,6 +144,7 @@ public class Button {
         if (fontFamily == null) fontFamily = defaultOptions.fontFamily;
         if (!fontWeight.hasValue()) fontWeight = defaultOptions.fontWeight;
         if (!testId.hasValue()) testId = defaultOptions.testId;
+        if (!accessibilityLabel.hasValue()) accessibilityLabel = defaultOptions.accessibilityLabel;
         if (!component.hasValue()) component = defaultOptions.component;
         if (!showAsAction.hasValue()) showAsAction = defaultOptions.showAsAction;
         if (!icon.hasValue()) icon = defaultOptions.icon;

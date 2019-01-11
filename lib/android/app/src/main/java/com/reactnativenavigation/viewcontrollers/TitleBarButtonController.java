@@ -102,6 +102,10 @@ public class TitleBarButtonController extends ViewController<TitleBarReactButton
             toolbar.setNavigationOnClickListener(view -> onPressListener.onPress(button.id));
             toolbar.setNavigationIcon(icon);
             setLeftButtonTestId(toolbar);
+            ImageButton backButton = ViewUtils.findChildByClass(toolbar, ImageButton.class);
+            if (backButton != null) {
+                backButton.setContentDescription(button.accessibilityLabel.toString());
+            }
         });
     }
 

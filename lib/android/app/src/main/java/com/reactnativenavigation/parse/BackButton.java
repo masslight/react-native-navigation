@@ -24,6 +24,7 @@ public class BackButton extends Button {
         result.color = ColorParser.parse(json, "color");
         result.disabledColor = ColorParser.parse(json, "disabledColor");
         result.testId = TextParser.parse(json, "testID");
+        result.accessibilityLabel = TextParser.parse(json, "accessibilityLabel");
 
         return result;
     }
@@ -47,6 +48,7 @@ public class BackButton extends Button {
         if (other.disableIconTint.hasValue()) disableIconTint = other.disableIconTint;
         if (other.enabled.hasValue()) enabled = other.enabled;
         if (other.testId.hasValue()) testId = other.testId;
+        if (other.accessibilityLabel.hasValue()) accessibilityLabel = other.accessibilityLabel;
     }
 
     void mergeWithDefault(final BackButton defaultOptions) {
@@ -57,6 +59,7 @@ public class BackButton extends Button {
         if (!disableIconTint.hasValue()) disableIconTint = defaultOptions.disableIconTint;
         if (!enabled.hasValue()) enabled = defaultOptions.enabled;
         if (!testId.hasValue()) testId = defaultOptions.testId;
+        if (!accessibilityLabel.hasValue()) accessibilityLabel = defaultOptions.accessibilityLabel;
     }
 
     public void setVisible() {
