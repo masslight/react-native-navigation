@@ -232,67 +232,7 @@ public class StackController extends ParentController<StackLayout> {
             listenerAdapter.onSuccess(child.getId());
         }
     }
-
-    public void setRoot(List<ViewController> viewControllers, CommandListener listener) {
-        if (viewControllers.size() == 0) {
-            return;
-        }
-        List<ViewController> list = viewControllers;
-        ViewController lastChild = list.get(list.size() - 1);
-//        backButtonHelper.clear(lastChild);
-        final ViewController currentTopVC = stack.peek();
-
-        List<ViewController> toRemoveList = getChildControllersList();
-        CommandListenerAdapter adapter = new CommandListenerAdapter() {
-            @Override
-            public void onSuccess(String childId) {
-                for (ViewController vc: toRemoveList) {
-                    removeAndDestroyController(vc);
-                }
-                listener.onSuccess(childId);
-            }
-        };
-
-        Options resolvedOptions = resolveCurrentOptions(presenter.getDefaultOptions());
-        for (ViewController vc: list) {
-            vc.setParentController(this);
-            stack.push(vc.getId(), vc);
-        }
-        addChildToStack(lastChild, lastChild.getView(), resolvedOptions);
-
-
-        if (currentTopVC != null) {
-            if (resolvedOptions.animations.push.enabled.isTrueOrUndefined()) {
-//                if (resolvedOptions.animations.push.waitForRender.isTrue()) {
-//                    lastChild.getView().setAlpha(0);
-//                    lastChild.setOnAppearedListener(() -> animator.push(lastChild.getView(), resolvedOptions.animations.push,resolvedOptions.transitions, toRemove.getElements(), lastChild.getElements(), () -> {
-//                        getView().removeView(toRemove.getView());
-//                        adapter.onSuccess(lastChild.getId());
-//                    }));
-//                } else {
-                    animator.push(lastChild.getView(), resolvedOptions.animations.push, () -> {
-                        if (!currentTopVC.equals(peek())) {
-                            getView().removeView(currentTopVC.getView());
-                        }
-                        adapter.onSuccess(lastChild.getId());
-                    });
-//                }
-            } else {
-                getView().removeView(currentTopVC.getView());
-                adapter.onSuccess(lastChild.getId());
-            }
-        } else {
-            adapter.onSuccess(lastChild.getId());
-        }
-    }
-
-    private void removeChildrenBellowTop() {
-        Iterator<String> iterator = stack.iterator();
-        while (stack.size() > 1) {
-            ViewController controller = stack.get(iterator.next());
-            if (!stack.isTop(controller.getId())) {
-                removeAndDestroyController(controller);
-            }
+    
     private void destroyStack(IdStack stack) {
         for (String s : (Iterable<String>) stack) {
             ((ViewController) stack.get(s)).destroy();
