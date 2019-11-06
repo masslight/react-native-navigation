@@ -3,7 +3,7 @@ package com.reactnativenavigation.react;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.RestrictTo;
+import androidx.annotation.RestrictTo;
 import android.view.MotionEvent;
 
 import com.facebook.react.ReactInstanceManager;
@@ -14,13 +14,14 @@ import com.facebook.react.uimanager.UIManagerModule;
 import com.facebook.react.uimanager.events.EventDispatcher;
 import com.reactnativenavigation.interfaces.ScrollEventListener;
 import com.reactnativenavigation.viewcontrollers.IReactView;
+import com.reactnativenavigation.views.Renderable;
 import com.reactnativenavigation.views.element.Element;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @SuppressLint("ViewConstructor")
-public class ReactView extends ReactRootView implements IReactView {
+public class ReactView extends ReactRootView implements IReactView, Renderable {
 
 	private final ReactInstanceManager reactInstanceManager;
 	private final String componentId;
@@ -67,7 +68,7 @@ public class ReactView extends ReactRootView implements IReactView {
 	public void sendComponentStart() {
         ReactContext currentReactContext = reactInstanceManager.getCurrentReactContext();
         if (currentReactContext != null) {
-            new EventEmitter(currentReactContext).componentDidAppear(componentId, componentName);
+            new EventEmitter(currentReactContext).emitComponentDidAppear(componentId, componentName);
         }
 	}
 
@@ -75,7 +76,7 @@ public class ReactView extends ReactRootView implements IReactView {
 	public void sendComponentStop() {
         ReactContext currentReactContext = reactInstanceManager.getCurrentReactContext();
         if (currentReactContext != null) {
-            new EventEmitter(currentReactContext).componentDidDisappear(componentId, componentName);
+            new EventEmitter(currentReactContext).emitComponentDidDisappear(componentId, componentName);
         }
 	}
 

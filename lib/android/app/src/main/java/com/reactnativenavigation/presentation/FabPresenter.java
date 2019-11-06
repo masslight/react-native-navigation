@@ -1,7 +1,7 @@
 package com.reactnativenavigation.presentation;
 
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -255,7 +255,7 @@ public class FabPresenter {
             fab.setColorRipple(options.rippleColor.get());
         }
         if (options.icon.hasValue()) {
-            fab.applyIcon(options.icon.get());
+            fab.applyIcon(options.icon.get(), options.iconColor);
         }
         if (options.size.hasValue()) {
             fab.setButtonSize("mini".equals(options.size.get()) ? SIZE_MINI : SIZE_NORMAL);
@@ -285,7 +285,7 @@ public class FabPresenter {
             fab.setColorRipple(options.rippleColor.get());
         }
         if (options.icon.hasValue()) {
-            fab.applyIcon(options.icon.get());
+            fab.applyIcon(options.icon.get(), options.iconColor);
         }
         if (options.size.hasValue()) {
             fab.setButtonSize("mini".equals(options.size.get()) ? SIZE_MINI : SIZE_NORMAL);

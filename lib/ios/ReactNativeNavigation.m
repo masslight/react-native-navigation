@@ -4,6 +4,7 @@
 
 #import "RNNBridgeManager.h"
 #import "RNNSplashScreen.h"
+#import "RNNLayoutManager.h"
 
 @interface ReactNativeNavigation()
 
@@ -32,8 +33,11 @@
 }
 
 + (UIViewController *)findViewController:(NSString *)componentId {
-    RNNStore *store = [[ReactNativeNavigation sharedInstance].bridgeManager store];
-    return [store findComponentForId:componentId];
+    return [RNNLayoutManager findComponentForId:componentId];
+}
+
++ (void)setJSCodeLocation:(NSURL *)jsCodeLocation {
+	[[ReactNativeNavigation sharedInstance].bridgeManager setJSCodeLocation:jsCodeLocation];
 }
 
 # pragma mark - instance
@@ -63,7 +67,15 @@
 
 - (UIWindow *)initializeKeyWindow {
 	UIWindow* keyWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-	keyWindow.backgroundColor = [UIColor whiteColor];
+	if (@available(iOS 13.0, *)) {
+#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+		keyWindow.backgroundColor = [UIColor systemBackgroundColor];
+#else
+		keyWindow.backgroundColor = [UIColor whiteColor];
+#endif
+	} else {
+		keyWindow.backgroundColor = [UIColor whiteColor];
+	}
 	UIApplication.sharedApplication.delegate.window = keyWindow;
 	
 	return keyWindow;

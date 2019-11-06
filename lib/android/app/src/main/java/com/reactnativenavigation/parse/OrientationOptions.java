@@ -1,6 +1,6 @@
 package com.reactnativenavigation.parse;
 
-import android.support.annotation.CheckResult;
+import androidx.annotation.CheckResult;
 
 import com.reactnativenavigation.parse.params.Orientation;
 
@@ -53,7 +53,7 @@ public class OrientationOptions {
     }
 
     public boolean hasValue() {
-        return !orientations.isEmpty();
+        return !orientations.isEmpty() && !(orientations.size() == 1 && orientations.get(0) == Orientation.Default);
     }
 
     @CheckResult

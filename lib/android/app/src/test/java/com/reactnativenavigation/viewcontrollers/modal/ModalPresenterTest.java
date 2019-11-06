@@ -1,6 +1,7 @@
 package com.reactnativenavigation.viewcontrollers.modal;
 
 import android.app.Activity;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import android.widget.FrameLayout;
 
 import com.reactnativenavigation.BaseTest;
@@ -38,7 +39,7 @@ public class ModalPresenterTest extends BaseTest {
     private ModalPresenter uut;
     private ModalAnimator animator;
     private ViewController root;
-    private FrameLayout modalsLayout;
+    private CoordinatorLayout modalsLayout;
 
     @Override
     public void beforeEach() {
@@ -49,7 +50,7 @@ public class ModalPresenterTest extends BaseTest {
         FrameLayout contentLayout = new FrameLayout(activity);
         FrameLayout rootLayout = new FrameLayout(activity);
         rootLayout.addView(root.getView());
-        modalsLayout = new FrameLayout(activity);
+        modalsLayout = new CoordinatorLayout(activity);
         contentLayout.addView(rootLayout);
         contentLayout.addView(modalsLayout);
         activity.setContentView(contentLayout);
@@ -70,6 +71,7 @@ public class ModalPresenterTest extends BaseTest {
         uut.showModal(modal1, root, new CommandListenerAdapter());
         verify(modal1).setWaitForRender(any());
         verify(modal1).resolveCurrentOptions(defaultOptions);
+        assertThat(modal1.getView().getFitsSystemWindows()).isTrue();
     }
 
     @Test
@@ -138,7 +140,7 @@ public class ModalPresenterTest extends BaseTest {
     public void showModal_waitForRender() {
         modal1.options.animations.showModal.waitForRender = new Bool(true);
         uut.showModal(modal1, root, new CommandListenerAdapter());
-        verify(modal1).setOnAppearedListener(any());
+        verify(modal1).addOnAppearedListener(any());
         verifyZeroInteractions(animator);
     }
 

@@ -6,42 +6,50 @@ import { Options } from '../interfaces/Options';
 import { Layout, LayoutRoot } from '../interfaces/Layout';
 import { LayoutTreeParser } from './LayoutTreeParser';
 import { LayoutTreeCrawler } from './LayoutTreeCrawler';
+import { OptionsProcessor } from './OptionsProcessor';
+import { Store } from '../components/Store';
 
 export class Commands {
   constructor(
+    private readonly store: Store,
     private readonly nativeCommandsSender: NativeCommandsSender,
     private readonly layoutTreeParser: LayoutTreeParser,
     private readonly layoutTreeCrawler: LayoutTreeCrawler,
     private readonly commandsObserver: CommandsObserver,
-    private readonly uniqueIdProvider: UniqueIdProvider) {
-  }
+    private readonly uniqueIdProvider: UniqueIdProvider,
+    private readonly optionsProcessor: OptionsProcessor
+  ) {}
 
   public setRoot(simpleApi: LayoutRoot) {
     const input = _.cloneDeep(simpleApi);
     const root = this.layoutTreeParser.parse(input.root);
-    this.layoutTreeCrawler.crawl(root);
 
     const modals = _.map(input.modals, (modal) => {
-      const modalLayout = this.layoutTreeParser.parse(modal);
-      this.layoutTreeCrawler.crawl(modalLayout);
-      return modalLayout;
+      return this.layoutTreeParser.parse(modal);
     });
 
     const overlays = _.map(input.overlays, (overlay) => {
-      const overlayLayout = this.layoutTreeParser.parse(overlay);
-      this.layoutTreeCrawler.crawl(overlayLayout);
-      return overlayLayout;
+      return this.layoutTreeParser.parse(overlay);
     });
 
     const commandId = this.uniqueIdProvider.generate('setRoot');
-    const result = this.nativeCommandsSender.setRoot(commandId, { root, modals, overlays });
     this.commandsObserver.notify('setRoot', { commandId, layout: { root, modals, overlays } });
+
+    this.layoutTreeCrawler.crawl(root);
+    modals.forEach((modalLayout) => {
+      this.layoutTreeCrawler.crawl(modalLayout);
+    });
+    overlays.forEach((overlayLayout) => {
+      this.layoutTreeCrawler.crawl(overlayLayout);
+    });
+
+    const result = this.nativeCommandsSender.setRoot(commandId, { root, modals, overlays });
     return result;
   }
 
   public setDefaultOptions(options: Options) {
     const input = _.cloneDeep(options);
-    this.layoutTreeCrawler.processOptions(input);
+    this.optionsProcessor.processOptions(input);
 
     this.nativeCommandsSender.setDefaultOptions(input);
     this.commandsObserver.notify('setDefaultOptions', { options });
@@ -49,20 +57,27 @@ export class Commands {
 
   public mergeOptions(componentId: string, options: Options) {
     const input = _.cloneDeep(options);
-    this.layoutTreeCrawler.processOptions(input);
+    this.optionsProcessor.processOptions(input);
 
     this.nativeCommandsSender.mergeOptions(componentId, input);
     this.commandsObserver.notify('mergeOptions', { componentId, options });
   }
 
-  public showModal(simpleApi: Layout) {
-    const input = _.cloneDeep(simpleApi);
-    const layout = this.layoutTreeParser.parse(input);
-    this.layoutTreeCrawler.crawl(layout);
+  public updateProps(componentId: string, props: object) {
+    const input = _.cloneDeep(props);
+    this.store.updateProps(componentId, input);
+    this.commandsObserver.notify('updateProps', { componentId, props });
+  }
+
+  public showModal(layout: Layout) {
+    const layoutCloned = _.cloneDeep(layout);
+    const layoutNode = this.layoutTreeParser.parse(layoutCloned);
 
     const commandId = this.uniqueIdProvider.generate('showModal');
-    const result = this.nativeCommandsSender.showModal(commandId, layout);
-    this.commandsObserver.notify('showModal', { commandId, layout });
+    this.commandsObserver.notify('showModal', { commandId, layout: layoutNode });
+    this.layoutTreeCrawler.crawl(layoutNode);
+
+    const result = this.nativeCommandsSender.showModal(commandId, layoutNode);
     return result;
   }
 
@@ -82,13 +97,13 @@ export class Commands {
 
   public push(componentId: string, simpleApi: Layout) {
     const input = _.cloneDeep(simpleApi);
-
     const layout = this.layoutTreeParser.parse(input);
-    this.layoutTreeCrawler.crawl(layout);
 
     const commandId = this.uniqueIdProvider.generate('push');
-    const result = this.nativeCommandsSender.push(commandId, componentId, layout);
     this.commandsObserver.notify('push', { commandId, componentId, layout });
+    this.layoutTreeCrawler.crawl(layout);
+
+    const result = this.nativeCommandsSender.push(commandId, componentId, layout);
     return result;
   }
 
@@ -113,27 +128,31 @@ export class Commands {
     return result;
   }
 
-  public setStackRoot(componentId: string, simpleApi: Layout) {
-    const input = _.cloneDeep(simpleApi);
-
-    const layout = this.layoutTreeParser.parse(input);
-    this.layoutTreeCrawler.crawl(layout);
+  public setStackRoot(componentId: string, children: Layout[]) {
+    const input = _.map(_.cloneDeep(children), (simpleApi) => {
+      const layout = this.layoutTreeParser.parse(simpleApi);
+      return layout;
+    });
 
     const commandId = this.uniqueIdProvider.generate('setStackRoot');
-    const result = this.nativeCommandsSender.setStackRoot(commandId, componentId, layout);
-    this.commandsObserver.notify('setStackRoot', { commandId, componentId, layout });
+    this.commandsObserver.notify('setStackRoot', { commandId, componentId, layout: input });
+    input.forEach((layoutNode) => {
+      this.layoutTreeCrawler.crawl(layoutNode);
+    });
+
+    const result = this.nativeCommandsSender.setStackRoot(commandId, componentId, input);
     return result;
   }
 
   public showOverlay(simpleApi: Layout) {
     const input = _.cloneDeep(simpleApi);
-
     const layout = this.layoutTreeParser.parse(input);
-    this.layoutTreeCrawler.crawl(layout);
 
     const commandId = this.uniqueIdProvider.generate('showOverlay');
-    const result = this.nativeCommandsSender.showOverlay(commandId, layout);
     this.commandsObserver.notify('showOverlay', { commandId, layout });
+    this.layoutTreeCrawler.crawl(layout);
+
+    const result = this.nativeCommandsSender.showOverlay(commandId, layout);
     return result;
   }
 

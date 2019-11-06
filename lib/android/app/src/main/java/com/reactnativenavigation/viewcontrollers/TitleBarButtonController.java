@@ -4,10 +4,10 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.annotation.RestrictTo;
-import android.support.v7.widget.ActionMenuView;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import androidx.annotation.RestrictTo;
+import androidx.appcompat.widget.ActionMenuView;
+import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageButton;
@@ -69,13 +69,18 @@ public class TitleBarButtonController extends ViewController<TitleBarReactButton
     @SuppressLint("MissingSuperCall")
     @Override
     public void onViewAppeared() {
-        view.sendComponentStart();
+        getView().sendComponentStart();
     }
 
     @SuppressLint("MissingSuperCall")
     @Override
     public void onViewDisappear() {
-        view.sendComponentStop();
+        getView().sendComponentStop();
+    }
+
+    @Override
+    public boolean isRendered() {
+        return !button.component.componentId.hasValue() || super.isRendered();
     }
 
     @Override
@@ -97,7 +102,8 @@ public class TitleBarButtonController extends ViewController<TitleBarReactButton
     }
 
     public void applyNavigationIcon(Toolbar toolbar) {
-        navigationIconResolver.resolve(button, icon -> {
+        Integer direction = getActivity().getWindow().getDecorView().getLayoutDirection();
+        navigationIconResolver.resolve(button, direction, icon -> {
             setIconColor(icon);
             toolbar.setNavigationOnClickListener(view -> onPressListener.onPress(button.id));
             toolbar.setNavigationIcon(icon);
@@ -162,6 +168,9 @@ public class TitleBarButtonController extends ViewController<TitleBarReactButton
     private void setTestId(Toolbar toolbar, Text testId) {
         if (!testId.hasValue()) return;
         UiUtils.runOnPreDrawOnce(toolbar, () -> {
+            if (button.hasComponent() && view != null) {
+                view.setTag(testId.get());
+            }
             ActionMenuView buttonsLayout = ViewUtils.findChildByClass(toolbar, ActionMenuView.class);
             List<TextView> buttons = ViewUtils.findChildrenByClass(buttonsLayout, TextView.class);
             for (TextView view : buttons) {

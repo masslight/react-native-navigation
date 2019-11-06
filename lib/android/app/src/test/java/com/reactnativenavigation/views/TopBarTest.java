@@ -3,36 +3,26 @@ package com.reactnativenavigation.views;
 import android.app.Activity;
 
 import com.reactnativenavigation.BaseTest;
-import com.reactnativenavigation.anim.TopBarAnimator;
-import com.reactnativenavigation.mocks.TopBarBackgroundViewCreatorMock;
-import com.reactnativenavigation.parse.AnimationOptions;
-import com.reactnativenavigation.viewcontrollers.topbar.TopBarBackgroundViewController;
+import com.reactnativenavigation.utils.UiUtils;
 import com.reactnativenavigation.viewcontrollers.topbar.TopBarController;
 import com.reactnativenavigation.views.topbar.TopBar;
 
 import org.junit.Test;
+import org.robolectric.annotation.Config;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
+@Config(qualifiers = "xxhdpi")
 public class TopBarTest extends BaseTest {
 
     private TopBar uut;
-    private TopBarAnimator animator;
+    private Activity activity;
 
-    @SuppressWarnings("Convert2Lambda")
     @Override
     public void beforeEach() {
-        Activity activity = newActivity();
-        TopBarBackgroundViewController topBarBackgroundViewController = new TopBarBackgroundViewController(activity, new TopBarBackgroundViewCreatorMock());
-        StackLayout parent = new StackLayout(activity, topBarBackgroundViewController, new TopBarController(), null);
-        uut = new TopBar(activity, topBarBackgroundViewController, parent);
-        animator = spy(new TopBarAnimator(uut));
-        uut.setAnimator(animator);
+        activity = newActivity();
+        StackLayout parent = new StackLayout(activity, new TopBarController(), null);
+        uut = new TopBar(activity);
         parent.addView(uut);
     }
 
@@ -44,17 +34,12 @@ public class TopBarTest extends BaseTest {
     }
 
     @Test
-    public void hide_animate() {
-        AnimationOptions options = new AnimationOptions();
-        uut.hideAnimate(options);
-        verify(animator, times(1)).hide(eq(options), any());
-    }
+    public void setElevation_ignoreValuesNotSetByNavigation() {
+        float initialElevation = uut.getElevation();
+        uut.setElevation(1f);
+        assertThat(uut.getElevation()).isEqualTo(initialElevation);
 
-    @Test
-    public void show_animate() {
-        AnimationOptions options = new AnimationOptions();
-        uut.hide();
-        uut.showAnimate(options);
-        verify(animator, times(1)).show(options);
+        uut.setElevation(Double.valueOf(2));
+        assertThat(uut.getElevation()).isEqualTo(UiUtils.dpToPx(activity, 2));
     }
 }

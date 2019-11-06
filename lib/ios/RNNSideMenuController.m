@@ -1,6 +1,4 @@
 #import "RNNSideMenuController.h"
-#import "RNNSideMenuChildVC.h"
-#import "MMDrawerController.h"
 #import "MMDrawerVisualState.h"
 
 @interface RNNSideMenuController ()
@@ -13,7 +11,7 @@
 
 @implementation RNNSideMenuController
 
-- (instancetype)initWithLayoutInfo:(RNNLayoutInfo *)layoutInfo childViewControllers:(NSArray *)childViewControllers options:(RNNNavigationOptions *)options defaultOptions:(RNNNavigationOptions *)defaultOptions presenter:(RNNViewControllerPresenter *)presenter {
+- (instancetype)initWithLayoutInfo:(RNNLayoutInfo *)layoutInfo creator:(id<RNNComponentViewCreator>)creator childViewControllers:(NSArray *)childViewControllers options:(RNNNavigationOptions *)options defaultOptions:(RNNNavigationOptions *)defaultOptions presenter:(RNNBasePresenter *)presenter eventEmitter:(RNNEventEmitter *)eventEmitter {
 	[self setControllers:childViewControllers];
 	self = [super initWithCenterViewController:self.center leftDrawerViewController:self.left rightDrawerViewController:self.right];
 	
@@ -36,32 +34,8 @@
 	return self;
 }
 
-- (void)willMoveToParentViewController:(UIViewController *)parent {
-	if (parent) {
-		[_presenter applyOptionsOnWillMoveToParentViewController:self.resolveOptions];
-	}
-}
-
-- (UITabBarItem *)tabBarItem {
-	return self.center.tabBarItem;
-}
-
-- (void)onChildWillAppear {
-	[_presenter applyOptions:self.resolveOptions];
-	[((UIViewController<RNNParentProtocol> *)self.parentViewController) onChildWillAppear];
-}
-
-- (RNNNavigationOptions *)resolveOptions {
-	return [(RNNNavigationOptions *)[self.getCurrentChild.resolveOptions.copy mergeOptions:self.options] withDefault:self.defaultOptions];
-}
-
-- (void)mergeOptions:(RNNNavigationOptions *)options {
-	[_presenter mergeOptions:options currentOptions:self.options defaultOptions:self.defaultOptions];
-	[((UIViewController<RNNLayoutProtocol> *)self.parentViewController) mergeOptions:options];
-}
-
-- (void)overrideOptions:(RNNNavigationOptions *)options {
-	[self.options overrideOptions:options];
+- (void)setDefaultOptions:(RNNNavigationOptions *)defaultOptions {
+	[self.presenter setDefaultOptions:defaultOptions];
 }
 
 - (void)setAnimationType:(NSString *)animationType {
@@ -80,9 +54,11 @@
 	switch (side) {
 		case MMDrawerSideRight:
 			self.maximumRightDrawerWidth = width;
+			[self.right setWidth:width];
 			break;
 		case MMDrawerSideLeft:
 			self.maximumLeftDrawerWidth = width;
+			[self.left setWidth:width];
 		default:
 			break;
 	}
@@ -118,10 +94,9 @@
 
 -(void)setControllers:(NSArray*)controllers {
 	for (id controller in controllers) {
-		
 		if ([controller isKindOfClass:[RNNSideMenuChildVC class]]) {
 			RNNSideMenuChildVC *child = (RNNSideMenuChildVC*)controller;
-			
+
 			if (child.type == RNNSideMenuChildTypeCenter) {
 				self.center = child;
 			}
@@ -131,8 +106,10 @@
 			else if(child.type == RNNSideMenuChildTypeRight) {
 				self.right = child;
 			}
+
+			[self addChildViewController:child];
 		}
-		
+
 		else {
 			@throw [NSException exceptionWithName:@"UnknownSideMenuControllerType" reason:[@"Unknown side menu type " stringByAppendingString:[controller description]] userInfo:nil];
 		}
@@ -141,6 +118,10 @@
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
 	return self.openedViewController.preferredStatusBarStyle;
+}
+
+- (UIViewController<RNNLayoutProtocol> *)getCurrentChild {
+	return self.openedViewController;
 }
 
 - (UIViewController *)openedViewController {
@@ -153,16 +134,23 @@
 			return self.right;
 		default:
 			return self.center;
-			break;
 	}
 }
 
-- (UIViewController<RNNLayoutProtocol> *)getCurrentChild {
-	return self.center;
+- (RNNNavigationOptions *)resolveOptions {
+    RNNNavigationOptions * options = super.resolveOptions;
+    if (self.openedViewController != self.center) {
+        [options.sideMenu mergeOptions:self.center.resolveOptions.sideMenu];
+    }
+    return options;
 }
 
-- (UIViewController<RNNLeafProtocol> *)getCurrentLeaf {
-	return [[self getCurrentChild] getCurrentLeaf];
+- (CGFloat)getTopBarHeight {
+    for(UIViewController * child in [self childViewControllers]) {
+        CGFloat childTopBarHeight = [child getTopBarHeight];
+        if (childTopBarHeight > 0) return childTopBarHeight;
+    }
+    return [super getTopBarHeight];
 }
 
 @end

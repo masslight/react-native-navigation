@@ -3,7 +3,6 @@ package com.reactnativenavigation.viewcontrollers;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
 import com.reactnativenavigation.BaseTest;
@@ -22,6 +21,8 @@ import com.reactnativenavigation.viewcontrollers.stack.StackController;
 
 import org.junit.Test;
 
+import androidx.appcompat.widget.Toolbar;
+
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+@SuppressWarnings("MagicNumber")
 public class TopBarButtonControllerTest extends BaseTest {
 
     private TitleBarButtonController uut;
@@ -43,11 +45,7 @@ public class TopBarButtonControllerTest extends BaseTest {
         final Activity activity = newActivity();
 
         TopBarButtonCreatorMock buttonCreatorMock = new TopBarButtonCreatorMock();
-        stackController = spy(
-                TestUtils.newStackController(activity)
-                        .setTopBarButtonCreator(buttonCreatorMock)
-                        .build()
-        );
+        stackController = spy(TestUtils.newStackController(activity).build());
         stackController.getView().layout(0, 0, 1080, 1920);
         stackController.getTopBar().layout(0, 0, 1080, 200);
         getTitleBar().layout(0, 0, 1080, 200);
