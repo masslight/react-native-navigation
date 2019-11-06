@@ -167,15 +167,9 @@ public class Navigator extends ParentController {
     }
 
     public void setStackRoot(String id, ViewController viewController, CommandListener listener) {
-        if (viewController instanceof StackController) {
-            List<ViewController> viewControllers = ((StackController) viewController).getChildControllersList();
-            applyOnStack(id, listener, stack -> stack.setRoot(viewControllers, listener));
-        }
-        else {
-            applyOnStack(id, listener, stack -> stack.setRoot(viewController, listener));
-        }
+        applyOnStack(id, listener, stack -> stack.setRoot(viewController, listener));
     }
-    
+
     public void setStackRoot(String id, List<ViewController> children, CommandListener listener) {
         applyOnStack(id, listener, stack -> stack.setRoot(children, listener));
     }

@@ -382,10 +382,6 @@ public class StackController extends ParentController<StackLayout> {
         return stack.values();
     }
 
-    public List<ViewController> getChildControllersList() {
-        return stack.array();
-    }
-
     @Override
     public void setupTopTabsWithViewPager(ViewPager viewPager) {
         topBarController.initTopTabs(viewPager);

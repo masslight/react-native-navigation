@@ -85,23 +85,12 @@ public class IdStack<E> implements Iterable<String> {
 		return deque.iterator();
 	}
 
-
 	public Collection<E> values() {
 		return map.values();
 	}
 
-  // Get child controllers preserving the order. Collection has underfined order of elements.
-  public List<E> array() {
-    List<E> list = new ArrayList();
-    //Iterator<String> iterator = iterator();
-    Iterator<String> iterator = deque.descendingIterator();
-    while (iterator.hasNext()) {
-      list.add(map.get(iterator.next()));
-    }
-    return list;
+  public void remove(Iterator<String> iterator, String id) {
+      iterator.remove();
+      map.remove(id);
   }
-    public void remove(Iterator<String> iterator, String id) {
-        iterator.remove();
-        map.remove(id);
-    }
 }
