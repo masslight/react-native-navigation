@@ -9,13 +9,14 @@ import android.view.ViewParent;
 
 import com.facebook.react.views.view.ReactViewBackgroundDrawable;
 import com.reactnativenavigation.react.ReactView;
+import com.reactnativenavigation.utils.Functions.Func1;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ViewUtils {
     @Nullable
-    public static <T> T findChildByClass(ViewGroup root, Class clazz) {
+    public static <T extends View> T findChildByClass(ViewGroup root, Class<T> clazz) {
         for (int i = 0; i < root.getChildCount(); i++) {
             View view = root.getChildAt(i);
             if (clazz.isAssignableFrom(view.getClass())) {
@@ -90,7 +91,7 @@ public class ViewUtils {
         return view.getLayoutParams().height < 0 ? view.getHeight() : view.getLayoutParams().height;
     }
 
-    public static void performOnParentReactView(View child, Task<ReactView> task) {
+    public static void performOnParentReactView(View child, Func1<ReactView> task) {
         ReactView parent = findParentReactView(child.getParent());
         if (parent != null) {
             task.run(parent);

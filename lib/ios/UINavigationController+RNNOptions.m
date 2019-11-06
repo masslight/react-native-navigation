@@ -1,6 +1,5 @@
 #import "UINavigationController+RNNOptions.h"
 #import "RNNFontAttributesCreator.h"
-#import "UIImage+tint.h"
 
 const NSInteger BLUR_TOPBAR_TAG = 78264802;
 
@@ -36,12 +35,9 @@ const NSInteger BLUR_TOPBAR_TAG = 78264802;
 
 - (void)rnn_setNavigationBarNoBorder:(BOOL)noBorder {
 	if (noBorder) {
-		self.navigationBar
-		.shadowImage = [[UIImage alloc] init];
-		[self.navigationBar setBackgroundImage:[UIImage new] forBarMetrics:UIBarMetricsDefault];
+		[self.navigationBar setShadowImage:[[UIImage alloc] init]];
 	} else {
-		self.navigationBar
-		.shadowImage = nil;
+		[self.navigationBar setShadowImage:nil];
 	}
 }
 
@@ -49,8 +45,8 @@ const NSInteger BLUR_TOPBAR_TAG = 78264802;
 	self.navigationBar.barStyle = barStyle;
 }
 
-- (void)rnn_setNavigationBarFontFamily:(NSString *)fontFamily fontSize:(NSNumber *)fontSize color:(UIColor *)color {
-	NSDictionary* fontAttributes = [RNNFontAttributesCreator createFontAttributesWithFontFamily:fontFamily fontSize:fontSize color:color];
+- (void)rnn_setNavigationBarFontFamily:(NSString *)fontFamily fontSize:(NSNumber *)fontSize fontWeight:(NSString *)fontWeight color:(UIColor *)color {
+	NSDictionary* fontAttributes = [RNNFontAttributesCreator createWithFontFamily:fontFamily fontSize:fontSize fontWeight:fontWeight color:color];
 	
 	if (fontAttributes.allKeys.count > 0) {
 		self.navigationBar.titleTextAttributes = fontAttributes;
@@ -67,9 +63,9 @@ const NSInteger BLUR_TOPBAR_TAG = 78264802;
 	}
 }
 
-- (void)rnn_setNavigationBarLargeTitleFontFamily:(NSString *)fontFamily fontSize:(NSNumber *)fontSize color:(UIColor *)color {
+- (void)rnn_setNavigationBarLargeTitleFontFamily:(NSString *)fontFamily fontSize:(NSNumber *)fontSize fontWeight:(NSString *)fontWeight color:(UIColor *)color {
 	if (@available(iOS 11.0, *)) {
-		NSDictionary* fontAttributes = [RNNFontAttributesCreator createFontAttributesWithFontFamily:fontFamily fontSize:fontSize color:color];
+		NSDictionary* fontAttributes = [RNNFontAttributesCreator createWithFontFamily:fontFamily fontSize:fontSize fontWeight:fontWeight color:color];
 		self.navigationBar.largeTitleTextAttributes = fontAttributes;
 	}
 }
@@ -97,25 +93,6 @@ const NSInteger BLUR_TOPBAR_TAG = 78264802;
 			[blur removeFromSuperview];
 		}
 	}
-}
-
-- (void)rnn_setBackButtonIcon:(UIImage *)icon withColor:(UIColor *)color title:(NSString *)title {
-	UIBarButtonItem *backItem = [[UIBarButtonItem alloc] init];
-	if (icon) {
-		backItem.image = color
-		? [[icon withTintColor:color] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]
-		: icon;
-		
-		[self.navigationBar setBackIndicatorImage:[UIImage new]];
-		[self.navigationBar setBackIndicatorTransitionMaskImage:[UIImage new]];
-	}
-	
-	UIViewController *lastViewControllerInStack = self.viewControllers.count > 1 ? [self.viewControllers objectAtIndex:self.viewControllers.count-2] : self.topViewController;
-	
-	backItem.title = title ? title : lastViewControllerInStack.navigationItem.title;
-	backItem.tintColor = color;
-
-	lastViewControllerInStack.navigationItem.backBarButtonItem = backItem;
 }
 
 - (void)rnn_setBackButtonColor:(UIColor *)color {

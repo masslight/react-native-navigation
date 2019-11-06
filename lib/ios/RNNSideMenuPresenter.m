@@ -3,51 +3,73 @@
 
 @implementation RNNSideMenuPresenter
 
+-(instancetype)initWithDefaultOptions:(RNNNavigationOptions *)defaultOptions {
+	self = [super initWithDefaultOptions:defaultOptions];
+	return self;
+}
+
 - (void)applyOptions:(RNNNavigationOptions *)options {
 	[super applyOptions:options];
-		
-	RNNSideMenuController* sideMenuController = self.bindedViewController;
+	RNNNavigationOptions *withDefault = [options withDefault:[self defaultOptions]];
+	RNNSideMenuController* sideMenuController = self.boundViewController;
+
+	[sideMenuController side:MMDrawerSideLeft enabled:[withDefault.sideMenu.left.enabled getWithDefaultValue:YES]];
+	[sideMenuController side:MMDrawerSideRight enabled:[withDefault.sideMenu.right.enabled getWithDefaultValue:YES]];
 	
-	[sideMenuController side:MMDrawerSideLeft enabled:[options.sideMenu.left.enabled getWithDefaultValue:YES]];
-	[sideMenuController side:MMDrawerSideRight enabled:[options.sideMenu.right.enabled getWithDefaultValue:YES]];
+	[sideMenuController setShouldStretchLeftDrawer:[withDefault.sideMenu.left.shouldStretchDrawer getWithDefaultValue:YES]];
+	[sideMenuController setShouldStretchRightDrawer:[withDefault.sideMenu.right.shouldStretchDrawer getWithDefaultValue:YES]];
 	
-	[sideMenuController setShouldStretchLeftDrawer:[options.sideMenu.left.shouldStretchDrawer getWithDefaultValue:YES]];
-	[sideMenuController setShouldStretchRightDrawer:[options.sideMenu.right.shouldStretchDrawer getWithDefaultValue:YES]];
+	[sideMenuController setAnimationVelocityLeft:[withDefault.sideMenu.left.animationVelocity getWithDefaultValue:840.0f]];
+	[sideMenuController setAnimationVelocityRight:[withDefault.sideMenu.right.animationVelocity getWithDefaultValue:840.0f]];
 	
-	[sideMenuController setAnimationVelocityLeft:[options.sideMenu.left.animationVelocity getWithDefaultValue:840.0f]];
-	[sideMenuController setAnimationVelocityRight:[options.sideMenu.right.animationVelocity getWithDefaultValue:840.0f]];
+	[sideMenuController setAnimationType:[withDefault.sideMenu.animationType getWithDefaultValue:nil]];
 	
-	[sideMenuController setAnimationType:[options.sideMenu.animationType getWithDefaultValue:nil]];
+	if (withDefault.sideMenu.left.width.hasValue) {
+		[sideMenuController side:MMDrawerSideLeft width:withDefault.sideMenu.left.width.get];
+	}
+	
+	if (withDefault.sideMenu.right.width.hasValue) {
+		[sideMenuController side:MMDrawerSideRight width:withDefault.sideMenu.right.width.get];
+	}
+	
+	if (withDefault.sideMenu.left.visible.hasValue) {
+		[sideMenuController side:MMDrawerSideLeft visible:withDefault.sideMenu.left.visible.get];
+		[withDefault.sideMenu.left.visible consume];
+	}
+	
+	if (withDefault.sideMenu.right.visible.hasValue) {
+		[sideMenuController side:MMDrawerSideRight visible:withDefault.sideMenu.right.visible.get];
+		[withDefault.sideMenu.right.visible consume];
+	}
 }
 
 - (void)applyOptionsOnInit:(RNNNavigationOptions *)initialOptions {
 	[super applyOptionsOnInit:initialOptions];
-	
-	RNNSideMenuController* sideMenuController = self.bindedViewController;
-	if (initialOptions.sideMenu.left.width.hasValue) {
-		[sideMenuController side:MMDrawerSideLeft width:initialOptions.sideMenu.left.width.get];
+
+	RNNNavigationOptions *withDefault = [initialOptions withDefault:[self defaultOptions]];
+	RNNSideMenuController* sideMenuController = self.boundViewController;
+	if (withDefault.sideMenu.left.width.hasValue) {
+		[sideMenuController side:MMDrawerSideLeft width:withDefault.sideMenu.left.width.get];
 	}
 	
-	if (initialOptions.sideMenu.right.width.hasValue) {
-		[sideMenuController side:MMDrawerSideRight width:initialOptions.sideMenu.right.width.get];
+	if (withDefault.sideMenu.right.width.hasValue) {
+		[sideMenuController side:MMDrawerSideRight width:withDefault.sideMenu.right.width.get];
 	}
 
-		[sideMenuController setOpenDrawerGestureModeMask:[[initialOptions.sideMenu.openGestureMode getWithDefaultValue:@(MMOpenDrawerGestureModeAll)] integerValue]];
+		[sideMenuController setOpenDrawerGestureModeMask:[[withDefault.sideMenu.openGestureMode getWithDefaultValue:@(MMOpenDrawerGestureModeAll)] integerValue]];
 }
 
-- (void)mergeOptions:(RNNNavigationOptions *)newOptions currentOptions:(RNNNavigationOptions *)currentOptions defaultOptions:(RNNNavigationOptions *)defaultOptions {
-	[super mergeOptions:newOptions currentOptions:currentOptions defaultOptions:defaultOptions];
+- (void)mergeOptions:(RNNNavigationOptions *)newOptions currentOptions:(RNNNavigationOptions *)currentOptions {
+	[super mergeOptions:newOptions currentOptions:currentOptions];
 	
-	RNNSideMenuController* sideMenuController = self.bindedViewController;
+	RNNSideMenuController* sideMenuController = self.boundViewController;
 	
 	if (newOptions.sideMenu.left.enabled.hasValue) {
 		[sideMenuController side:MMDrawerSideLeft enabled:newOptions.sideMenu.left.enabled.get];
-		[newOptions.sideMenu.left.enabled consume];
 	}
 	
 	if (newOptions.sideMenu.right.enabled.hasValue) {
 		[sideMenuController side:MMDrawerSideRight enabled:newOptions.sideMenu.right.enabled.get];
-		[newOptions.sideMenu.right.enabled consume];
 	}
 	
 	if (newOptions.sideMenu.left.visible.hasValue) {

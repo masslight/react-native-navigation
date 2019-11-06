@@ -20,7 +20,6 @@ import com.reactnativenavigation.viewcontrollers.ChildControllersRegistry;
 import com.reactnativenavigation.viewcontrollers.IdStack;
 import com.reactnativenavigation.viewcontrollers.ParentController;
 import com.reactnativenavigation.viewcontrollers.ViewController;
-import com.reactnativenavigation.viewcontrollers.topbar.TopBarBackgroundViewController;
 import com.reactnativenavigation.viewcontrollers.topbar.TopBarController;
 import com.reactnativenavigation.views.Component;
 import com.reactnativenavigation.views.ReactComponent;
@@ -32,20 +31,19 @@ import java.util.Iterator;
 import java.util.List;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static com.reactnativenavigation.utils.CollectionUtils.*;
 
 public class StackController extends ParentController<StackLayout> {
 
-    private final IdStack<ViewController> stack = new IdStack<>();
+    private IdStack<ViewController> stack = new IdStack<>();
     private final NavigationAnimator animator;
-    private TopBarBackgroundViewController topBarBackgroundViewController;
     private TopBarController topBarController;
     private BackButtonHelper backButtonHelper;
     private final StackPresenter presenter;
 
-    public StackController(Activity activity, List<ViewController> children, ChildControllersRegistry childRegistry, TopBarBackgroundViewController topBarBackgroundViewController, TopBarController topBarController, NavigationAnimator animator, String id, Options initialOptions, BackButtonHelper backButtonHelper, StackPresenter stackPresenter, Presenter presenter) {
+    public StackController(Activity activity, List<ViewController> children, ChildControllersRegistry childRegistry, TopBarController topBarController, NavigationAnimator animator, String id, Options initialOptions, BackButtonHelper backButtonHelper, StackPresenter stackPresenter, Presenter presenter) {
         super(activity, childRegistry, id, presenter, initialOptions);
         this.topBarController = topBarController;
-        this.topBarBackgroundViewController = topBarBackgroundViewController;
         this.animator = animator;
         this.backButtonHelper = backButtonHelper;
         this.presenter = stackPresenter;
@@ -55,6 +53,17 @@ public class StackController extends ParentController<StackLayout> {
             child.setParentController(this);
             if (size() > 1) backButtonHelper.addToPushedChild(child);
         }
+    }
+
+    @Override
+    public boolean isRendered() {
+        if (isEmpty()) return false;
+        if (getCurrentChild().isDestroyed()) return false;
+        ViewGroup currentChild = getCurrentChild().getView();
+        if (currentChild instanceof Component) {
+            return super.isRendered() && presenter.isRendered((Component) currentChild);
+        }
+        return super.isRendered();
     }
 
     @Override
@@ -70,7 +79,7 @@ public class StackController extends ParentController<StackLayout> {
 
     @Override
     public void onAttachToParent() {
-        if (!isViewShown() && !isEmpty()) {
+        if (!isEmpty() && !getCurrentChild().isDestroyed() && !isViewShown()) {
             presenter.applyChildOptions(resolveCurrentOptions(), (Component) getCurrentChild().getView());
         }
     }
@@ -125,18 +134,6 @@ public class StackController extends ParentController<StackLayout> {
     }
 
     @Override
-    public void destroy() {
-        topBarController.clear();
-        super.destroy();
-    }
-
-    @Override
-    public void clearOptions() {
-        super.clearOptions();
-        topBarController.clear();
-    }
-
-    @Override
     public void onChildDestroyed(Component child) {
         super.onChildDestroyed(child);
         presenter.onChildDestroyed(child);
@@ -154,7 +151,7 @@ public class StackController extends ParentController<StackLayout> {
             if (resolvedOptions.animations.push.enabled.isTrueOrUndefined()) {
                 if (resolvedOptions.animations.push.waitForRender.isTrue()) {
                     child.getView().setAlpha(0);
-                    child.setOnAppearedListener(() -> animator.push(child.getView(), resolvedOptions.animations.push, resolvedOptions.transitions, toRemove.getElements(), child.getElements(), () -> {
+                    child.addOnAppearedListener(() -> animator.push(child.getView(), resolvedOptions.animations.push, resolvedOptions.transitions, toRemove.getElements(), child.getElements(), () -> {
                         getView().removeView(toRemove.getView());
                         listener.onSuccess(child.getId());
                     }));
@@ -183,15 +180,57 @@ public class StackController extends ParentController<StackLayout> {
         getView().addView(view, getView().getChildCount() - 1);
     }
 
-    public void setRoot(ViewController child, CommandListener listener) {
-        backButtonHelper.clear(child);
-        push(child, new CommandListenerAdapter() {
+    public void setRoot(List<ViewController> children, CommandListener listener) {
+        animator.cancelPushAnimations();
+        final ViewController toRemove = stack.peek();
+        IdStack stackToDestroy = stack;
+        stack = new IdStack<>();
+
+        ViewController child = last(children);
+        if (children.size() == 1) {
+            backButtonHelper.clear(child);
+        } else {
+            backButtonHelper.addToPushedChild(child);
+        }
+
+        child.setParentController(this);
+        stack.push(child.getId(), child);
+        Options resolvedOptions = resolveCurrentOptions(presenter.getDefaultOptions());
+        addChildToStack(child, child.getView(), resolvedOptions);
+
+        CommandListener listenerAdapter = new CommandListenerAdapter() {
             @Override
             public void onSuccess(String childId) {
-                removeChildrenBellowTop();
+                destroyStack(stackToDestroy);
+                if (children.size() > 1) {
+                    for (int i = 0; i < children.size() - 1; i++) {
+                        stack.set(children.get(i).getId(), children.get(i), i);
+                        children.get(i).setParentController(StackController.this);
+                        if (i == 0) {
+                            backButtonHelper.clear(children.get(i));
+                        } else {
+                            backButtonHelper.addToPushedChild(children.get(i));
+                        }
+                    }
+                }
                 listener.onSuccess(childId);
             }
-        });
+        };
+
+        if (toRemove != null && resolvedOptions.animations.setStackRoot.enabled.isTrueOrUndefined()) {
+            if (resolvedOptions.animations.setStackRoot.waitForRender.isTrue()) {
+                child.getView().setAlpha(0);
+                child.addOnAppearedListener(() -> animator.push(child.getView(), resolvedOptions.animations.setStackRoot, resolvedOptions.transitions, toRemove.getElements(), child.getElements(), () -> {
+                    listenerAdapter.onSuccess(child.getId());
+                }));
+            } else {
+                animator.push(child.getView(), resolvedOptions.animations.setStackRoot, () -> {
+                    listenerAdapter.onSuccess(child.getId());
+                });
+            }
+        } else {
+            listenerAdapter.onSuccess(child.getId());
+        }
     }
 
     public void setRoot(List<ViewController> viewControllers, CommandListener listener) {
@@ -254,6 +293,9 @@ public class StackController extends ParentController<StackLayout> {
             if (!stack.isTop(controller.getId())) {
                 removeAndDestroyController(controller);
             }
+    private void destroyStack(IdStack stack) {
+        for (String s : (Iterable<String>) stack) {
+            ((ViewController) stack.get(s)).destroy();
         }
     }
 
@@ -300,15 +342,17 @@ public class StackController extends ParentController<StackLayout> {
             return;
         }
 
-        Iterator<String> iterator = stack.iterator();
-        String currentControlId = iterator.next();
-        while (!viewController.getId().equals(currentControlId)) {
-            if (stack.isTop(currentControlId)) {
-                currentControlId = iterator.next();
-                continue;
+        animator.cancelPushAnimations();
+        String currentControlId;
+        for (int i = stack.size() - 2; i >= 0; i--) {
+            currentControlId = stack.get(i).getId();
+            if (currentControlId.equals(viewController.getId())) {
+                break;
             }
-            removeAndDestroyController(stack.get(currentControlId));
-            currentControlId = iterator.next();
+
+            ViewController controller = stack.get(currentControlId);
+            stack.remove(controller.getId());
+            controller.destroy();
         }
 
         pop(mergeOptions, listener);
@@ -320,20 +364,18 @@ public class StackController extends ParentController<StackLayout> {
             return;
         }
 
+        animator.cancelPushAnimations();
         Iterator<String> iterator = stack.iterator();
+        iterator.next();
         while (stack.size() > 2) {
             ViewController controller = stack.get(iterator.next());
             if (!stack.isTop(controller.getId())) {
-                removeAndDestroyController(controller);
+                stack.remove(iterator, controller.getId());
+                controller.destroy();
             }
         }
 
         pop(mergeOptions, listener);
-    }
-
-    private void removeAndDestroyController(ViewController controller) {
-        stack.remove(controller.getId());
-        controller.destroy();
     }
 
     ViewController peek() {
@@ -365,11 +407,7 @@ public class StackController extends ParentController<StackLayout> {
     @NonNull
     @Override
     protected StackLayout createView() {
-        StackLayout stackLayout = new StackLayout(getActivity(),
-                topBarBackgroundViewController,
-                topBarController,
-                getId()
-        );
+        StackLayout stackLayout = new StackLayout(getActivity(), topBarController, getId());
         presenter.bindView(topBarController.getView());
         addInitialChild(stackLayout);
         return stackLayout;

@@ -1,5 +1,9 @@
 #import <UIKit/UIKit.h>
 
+@class RNNBottomTabOptions;
+@class RNNNavigationOptions;
+@class RNNBackButtonOptions;
+
 @interface UIViewController (RNNOptions)
 
 - (void)rnn_setBackgroundImage:(UIImage *)backgroundImage;
@@ -8,7 +12,7 @@
 
 - (void)rnn_setModalTransitionStyle:(UIModalTransitionStyle)modalTransitionStyle;
 
-- (void)rnn_setSearchBarWithPlaceholder:(NSString *)placeholder;
+- (void)rnn_setSearchBarWithPlaceholder:(NSString *)placeholder hideNavBarOnFocusSearchBar:(BOOL)hideNavBarOnFocusSearchBar;
 
 - (void)rnn_setSearchBarHiddenWhenScrolling:(BOOL)searchBarHidden;
 
@@ -33,6 +37,10 @@
 - (void)rnn_setBackgroundColor:(UIColor *)backgroundColor;
 
 - (void)rnn_setInterceptTouchOutside:(BOOL)interceptTouchOutside;
+
+- (void)rnn_setBackButtonIcon:(UIImage *)icon withColor:(UIColor *)color title:(NSString *)title;
+
+- (void)applyBackButton:(RNNBackButtonOptions *)backButton;
 
 - (BOOL)isModal;
 

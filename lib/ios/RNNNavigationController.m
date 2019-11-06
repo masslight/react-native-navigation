@@ -1,64 +1,26 @@
-
 #import "RNNNavigationController.h"
-#import "RNNModalAnimation.h"
 #import "RNNRootViewController.h"
 
 const NSInteger TOP_BAR_TRANSPARENT_TAG = 78264803;
 
-@interface RNNNavigationController()
-
-@property (nonatomic, strong) NSMutableDictionary* originalTopBarImages;
-
-@end
-
 @implementation RNNNavigationController
 
-- (instancetype)initWithLayoutInfo:(RNNLayoutInfo *)layoutInfo childViewControllers:(NSArray *)childViewControllers options:(RNNNavigationOptions *)options defaultOptions:(RNNNavigationOptions *)defaultOptions presenter:(RNNNavigationControllerPresenter *)presenter {
-	self = [super init];
-
-	self.presenter = presenter;
-	[self.presenter bindViewController:self];
-	
-	self.defaultOptions = defaultOptions;
-	self.options = options;
-	
-	self.layoutInfo = layoutInfo;
-	
-	[self setViewControllers:childViewControllers];
-	
-	return self;
+-(void)setDefaultOptions:(RNNNavigationOptions *)defaultOptions {
+	[super setDefaultOptions:defaultOptions];
+	[self.presenter setDefaultOptions:defaultOptions];
 }
 
-- (void)willMoveToParentViewController:(UIViewController *)parent {
-	if (parent) {
-		[_presenter applyOptionsOnWillMoveToParentViewController:self.resolveOptions];
-	}
+- (void)viewDidLayoutSubviews {
+	[super viewDidLayoutSubviews];
+	[self.presenter applyOptionsOnViewDidLayoutSubviews:self.resolveOptions];
 }
 
-- (void)onChildWillAppear {
-	[_presenter applyOptions:self.resolveOptions];
-	[((UIViewController<RNNParentProtocol> *)self.parentViewController) onChildWillAppear];
+- (UIViewController *)getCurrentChild {
+	return self.topViewController;
 }
 
-- (RNNNavigationOptions *)resolveOptions {
-	return [(RNNNavigationOptions *)[self.getCurrentChild.resolveOptions.copy mergeOptions:self.options] withDefault:self.defaultOptions];
-}
-
-- (void)mergeOptions:(RNNNavigationOptions *)options {
-	[_presenter mergeOptions:options currentOptions:self.options defaultOptions:self.defaultOptions];
-	[((UIViewController<RNNLayoutProtocol> *)self.parentViewController) mergeOptions:options];
-}
-
-- (void)overrideOptions:(RNNNavigationOptions *)options {
-	[self.options overrideOptions:options];
-}
-
-- (UITabBarItem *)tabBarItem {
-	return self.viewControllers.firstObject.tabBarItem;
-}
-
-- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
-	return self.getCurrentChild.supportedInterfaceOrientations;
+- (CGFloat)getTopBarHeight {
+	return self.navigationBar.frame.size.height;
 }
 
 - (UINavigationController *)navigationController {
@@ -66,7 +28,7 @@ const NSInteger TOP_BAR_TRANSPARENT_TAG = 78264803;
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
-	return self.getCurrentChild.preferredStatusBarStyle;
+	return [_presenter getStatusBarStyle:self.resolveOptions];
 }
 
 - (UIModalPresentationStyle)modalPresentationStyle {
@@ -85,22 +47,6 @@ const NSInteger TOP_BAR_TRANSPARENT_TAG = 78264803;
 	return [super popViewControllerAnimated:animated];
 }
 
-- (nullable id <UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source {
-	return [[RNNModalAnimation alloc] initWithScreenTransition:self.getCurrentChild.resolveOptions.animations.showModal isDismiss:NO];
-}
-
-- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
-	return [[RNNModalAnimation alloc] initWithScreenTransition:self.getCurrentChild.resolveOptions.animations.dismissModal isDismiss:YES];
-}
-
-- (UIViewController *)getCurrentChild {
-	return ((UIViewController<RNNParentProtocol>*)self.topViewController);
-}
-
-- (UIViewController<RNNLeafProtocol> *)getCurrentLeaf {
-	return [[self getCurrentChild] getCurrentLeaf];
-}
-
 - (UIViewController *)childViewControllerForStatusBarStyle {
 	return self.topViewController;
 }
@@ -111,7 +57,6 @@ const NSInteger TOP_BAR_TRANSPARENT_TAG = 78264803;
 		
 		if (bgColorAlpha == 0.0) {
 			if (![self.navigationBar viewWithTag:TOP_BAR_TRANSPARENT_TAG]){
-				[self storeOriginalTopBarImages:self];
 				UIView *transparentView = [[UIView alloc] initWithFrame:CGRectZero];
 				transparentView.backgroundColor = [UIColor clearColor];
 				transparentView.tag = TOP_BAR_TRANSPARENT_TAG;
@@ -126,36 +71,16 @@ const NSInteger TOP_BAR_TRANSPARENT_TAG = 78264803;
 			UIView *transparentView = [self.navigationBar viewWithTag:TOP_BAR_TRANSPARENT_TAG];
 			if (transparentView){
 				[transparentView removeFromSuperview];
-				[self.navigationBar setBackgroundImage:self.originalTopBarImages[@"backgroundImage"] forBarMetrics:UIBarMetricsDefault];
-				self.navigationBar.shadowImage = self.originalTopBarImages[@"shadowImage"];
-				self.originalTopBarImages = nil;
 			}
 		}
 	} else {
 		UIView *transparentView = [self.navigationBar viewWithTag:TOP_BAR_TRANSPARENT_TAG];
 		if (transparentView){
 			[transparentView removeFromSuperview];
-			[self.navigationBar setBackgroundImage:self.originalTopBarImages[@"backgroundImage"] ? self.originalTopBarImages[@"backgroundImage"] : [self.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault] forBarMetrics:UIBarMetricsDefault];
-			self.navigationBar.shadowImage = self.originalTopBarImages[@"shadowImage"] ? self.originalTopBarImages[@"shadowImage"] : self.navigationBar.shadowImage;
-			self.originalTopBarImages = nil;
 		}
 		
 		self.navigationBar.barTintColor = nil;
 	}
 }
-
-- (void)storeOriginalTopBarImages:(UINavigationController *)navigationController {
-	NSMutableDictionary *originalTopBarImages = [@{} mutableCopy];
-	UIImage *bgImage = [navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault];
-	if (bgImage != nil) {
-		originalTopBarImages[@"backgroundImage"] = bgImage;
-	}
-	UIImage *shadowImage = navigationController.navigationBar.shadowImage;
-	if (shadowImage != nil) {
-		originalTopBarImages[@"shadowImage"] = shadowImage;
-	}
-	self.originalTopBarImages = originalTopBarImages;
-}
-
 
 @end

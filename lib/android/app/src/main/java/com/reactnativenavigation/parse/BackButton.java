@@ -41,6 +41,7 @@ public class BackButton extends Button {
     }
 
     public void mergeWith(BackButton other) {
+        if (!Constants.BACK_BUTTON_ID.equals(other.id)) id = other.id;
         if (other.icon.hasValue()) icon = other.icon;
         if (other.visible.hasValue()) visible = other.visible;
         if (other.color.hasValue()) color = other.color;
@@ -52,6 +53,7 @@ public class BackButton extends Button {
     }
 
     void mergeWithDefault(final BackButton defaultOptions) {
+        if (Constants.BACK_BUTTON_ID.equals(id)) id = defaultOptions.id;
         if (!icon.hasValue()) icon = defaultOptions.icon;
         if (!visible.hasValue()) visible = defaultOptions.visible;
         if (!color.hasValue()) color = defaultOptions.color;
